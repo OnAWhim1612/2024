@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive New Year's Wishes Map</title>
+    <!-- Leaflet CSS and JavaScript -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&display=swap">
+    <style>
+        body {
+            font-family: 'Nunito Sans', sans-serif;
+            background-color: #282c36;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        #container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #map {
+            height: 300px;
+            width: 100%;
+            max-width: 800px; /* Reduced the max-width of the map */
+            margin-bottom: 20px;
+        }
+
+        #countdown {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #ffffff; /* Set text color to light */
+        }
+
+        #intro-message {
+            font-size: 14px; /* Adjusted font size to be smaller */
+            margin-bottom: 20px;
+            color: #ffffff; /* Set text color to light */
+        }
+
+        form {
+            max-width: 400px;
+            width: 100%;
+            background-color: #21252b;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        form label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #ffffff; /* Set text color to light */
+        }
+
+        form textarea, form input {
+            font-size: 16px;
+        }
+
+        form textarea {
+            resize: none;
+            height: 80px;
+        }
+
+        form button {
+            display: inline-block; /* Make buttons display inline */
+            background-color: #61dafb;
+            color: #000000; /* Set text color to dark */
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px; /* Add margin for spacing */
+        }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <!-- Introduction -->
+    <p id="intro-message">Welcome to the Interactive New Year's Wishes Map! Here, you can exchange New Year's wishes with people around the world, express hopes for 2024, share resolutions, and celebrate traditions. Join in the global celebration by adding your own message to the map. Let's make the transition to the new year memorable together!</p>
+
+    <!-- Warning message -->
+    <div class="alert alert-danger" role="alert">
+        Please avoid putting inappropriate content in the message; it will be deleted.
+    </div>
+
+    <!-- Countdown Clock -->
+    <div id="countdown" class="text-center"></div>
+
+    <!-- Map container -->
+    <div id="map"></div>
+
+    <!-- Form container -->
+    <form action="/add_marker" method="POST" id="markerForm">
+        <h2 class="text-center mb-4">Add Your New Year's Message</h2>
+        <label for="lat">Latitude:</label>
+        <input type="text" name="lat" id="lat" class="form-control" required>
+        <br>
+        <label for="lng">Longitude:</label>
+        <input type="text" name="lng" id="lng" class="form-control" required>
+        <br>
+        <label for="message">Message:</label>
+        <textarea name="message" class="form-control" required></textarea>
+        <br>
+        <button type="button" onclick="getLocation()">Detect Location</button>
+        <button type="submit">Submit</button>
+    </form>
+</div>
+
+<!-- JavaScript for Countdown Clock -->
+<script>
+    // Get the current time on the user's device
+    var countdownDate = new Date('2024-01-01').getTime();
+
+    function updateCountdown() {
+        var now = new Date().getTime();
+        var distance = countdownDate - now;
+
+        var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        document.getElementById("countdown").innerHTML =
+            days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
+
+        if (distance < 0) {
+            document.getElementById("countdown").innerHTML = "Happy New Year!";
+        }
+    }
+
+    // Update the countdown every 1 second
+    setInterval(updateCountdown, 1000);
+</script>
+
+<!-- Map Script -->
+<script>
+    var map = L.map('map').setView([0, 0], 2);  // Set initial view
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    {% for marker in markers %}
+        L.marker([{{ marker.lat }}, {{ marker.lng }}])
+            .bindPopup("{{ marker.message }}")
+            .addTo(map);
+    {% endfor %}
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition);
+        } else {
+            alert("Geolocation is not supported by this browser.");
+        }
+    }
+
+    function showPosition(position) {
+        document.getElementById("lat").value = position.coords.latitude;
+        document.getElementById("lng").value = position.coords.longitude;
+    }
+</script>
+
+</body>
+</html>
